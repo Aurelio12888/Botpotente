@@ -31,6 +31,7 @@ interface ChartPlaceholderProps {
 export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }: ChartPlaceholderProps) {
   // Use pair and timeframe in the dependency array to reset candles when they change
   const [candles, setCandles] = useState<Candle[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     // Generate unique seed based on pair name for visual consistency per asset
