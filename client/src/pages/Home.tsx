@@ -135,7 +135,7 @@ export default function Home() {
             </div>
           )}
           
-          <ChartPlaceholder isActive={isReady} />
+          <ChartPlaceholder isActive={isReady} pair={pair} timeframe={timeframe} />
           
           {/* Active status indicator overlay */}
           {isReady && (

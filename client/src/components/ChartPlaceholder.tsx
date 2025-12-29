@@ -24,29 +24,49 @@ const generateInitialCandles = (count: number) => {
 
 interface ChartPlaceholderProps {
   isActive?: boolean;
+  pair?: string;
+  timeframe?: string;
 }
 
-export function ChartPlaceholder({ isActive = true }: ChartPlaceholderProps) {
-  const [candles, setCandles] = useState(() => generateInitialCandles(30));
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }: ChartPlaceholderProps) {
+  // Use pair and timeframe in the dependency array to reset candles when they change
+  const [candles, setCandles] = useState<Candle[]>([]);
 
   useEffect(() => {
+    // Generate unique seed based on pair name for visual consistency per asset
+    const seed = pair.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const count = 30;
+    const initialCandles: Candle[] = [];
+    
+    // Simple deterministic pseudo-random based on seed
+    let currentPrice = 50 + (seed % 20);
+    for (let i = 0; i < count; i++) {
+      const open = currentPrice;
+      const vol = 1 + (seed % 5) / 2; // Volatility based on asset
+      const close = open + (Math.sin(i + seed) * vol);
+      const high = Math.max(open, close) + Math.random() * (vol/2);
+      const low = Math.min(open, close) - Math.random() * (vol/2);
+      initialCandles.push({ open, high, low, close, time: i });
+      currentPrice = close;
+    }
+    setCandles(initialCandles);
+
     const interval = setInterval(() => {
       setCandles(current => {
+        if (current.length === 0) return current;
         const lastCandle = current[current.length - 1];
-        // Simulate a new tick within the current candle OR a new candle
-        // For visual simplicity in MVP, we move the last candle and add a new one every few ticks
         const open = lastCandle.close;
-        const close = open + (Math.random() - 0.5) * 2;
-        const high = Math.max(open, close) + Math.random() * 0.5;
-        const low = Math.min(open, close) - Math.random() * 0.5;
+        const vol = 1 + (seed % 5) / 2;
+        const close = open + (Math.random() - 0.5) * vol;
+        const high = Math.max(open, close) + Math.random() * (vol/4);
+        const low = Math.min(open, close) - Math.random() * (vol/4);
         
         return [...current.slice(1), { open, high, low, close, time: Date.now() }];
       });
-    }, 2000); // New candle every 2 seconds for dynamic feel
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [pair, timeframe]); // Reset when selection changes
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -96,7 +116,7 @@ export function ChartPlaceholder({ isActive = true }: ChartPlaceholderProps) {
   }, [candles]);
 
   const lastCandle = candles[candles.length - 1];
-  const isUp = lastCandle.close >= lastCandle.open;
+  const isUp = lastCandle ? lastCandle.close >= lastCandle.open : true;
 
   return (
     <div className="w-full h-full relative bg-[#06080c]">
@@ -114,7 +134,7 @@ export function ChartPlaceholder({ isActive = true }: ChartPlaceholderProps) {
         className="w-full h-full relative z-10 p-2"
       />
       
-      {isActive && (
+      {isActive && lastCandle && (
         <div 
           className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold z-20 flex items-center gap-1 border-y border-l border-white/10 ${isUp ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
         >
