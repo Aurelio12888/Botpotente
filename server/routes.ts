@@ -3,12 +3,15 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { ASSET_PAIRS, TIMEFRAMES } from "@shared/schema";
+import { setupTelegramBot } from "./telegram";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Setup Telegram Bot
+  setupTelegramBot();
   
   // POST /api/signals/generate
   app.post(api.signals.generate.path, async (req, res) => {
