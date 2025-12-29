@@ -34,74 +34,87 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const seed = pair.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const initial = generateInitialCandles(30, seed);
-    setCandles(initial);
+    try {
+      const seed = (pair || "default").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const initial = generateInitialCandles(30, seed);
+      setCandles(initial);
 
-    const interval = setInterval(() => {
-      setCandles(current => {
-        if (current.length === 0) return current;
-        const lastCandle = current[current.length - 1];
-        const open = lastCandle.close;
-        const vol = 1 + (seed % 5) / 2;
-        const close = open + (Math.random() - 0.5) * vol;
-        const high = Math.max(open, close) + Math.random() * (vol / 4);
-        const low = Math.min(open, close) - Math.random() * (vol / 4);
-        
-        return [...current.slice(1), { open, high, low, close, time: Date.now() }];
-      });
-    }, 2000);
+      const interval = setInterval(() => {
+        setCandles(current => {
+          if (!current || current.length === 0) return current;
+          const lastCandle = current[current.length - 1];
+          if (!lastCandle) return current;
+          
+          const open = lastCandle.close;
+          const vol = 1 + (seed % 5) / 2;
+          const close = open + (Math.random() - 0.5) * vol;
+          const high = Math.max(open, close) + Math.random() * (vol / 4);
+          const low = Math.min(open, close) - Math.random() * (vol / 4);
+          
+          return [...current.slice(1), { open, high, low, close, time: Date.now() }];
+        });
+      }, 2000);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    } catch (e) {
+      console.error("Error initializing candles", e);
+    }
   }, [pair, timeframe]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || candles.length === 0) return;
+    if (!canvas || !candles || candles.length === 0) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const render = () => {
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
+      try {
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
 
-      const allValues = candles.flatMap(c => [c.high, c.low]);
-      const min = Math.min(...allValues) - 2;
-      const max = Math.max(...allValues) + 2;
-      const range = max - min;
+        const allValues = candles.flatMap(c => c ? [c.high, c.low] : []);
+        if (allValues.length === 0) return;
 
-      const candleWidth = (width / candles.length) * 0.8;
-      const gap = (width / candles.length) * 0.2;
+        const min = Math.min(...allValues) - 2;
+        const max = Math.max(...allValues) + 2;
+        const range = max - min || 1;
 
-      candles.forEach((c, i) => {
-        const x = i * (candleWidth + gap) + gap / 2;
-        const isBullish = c.close >= c.open;
-        const color = isBullish ? "#22c55e" : "#ef4444";
+        const candleWidth = (width / candles.length) * 0.8;
+        const gap = (width / candles.length) * 0.2;
 
-        const yOpen = height - ((c.open - min) / range) * height;
-        const yClose = height - ((c.close - min) / range) * height;
-        const yHigh = height - ((c.high - min) / range) * height;
-        const yLow = height - ((c.low - min) / range) * height;
+        candles.forEach((c, i) => {
+          if (!c) return;
+          const x = i * (candleWidth + gap) + gap / 2;
+          const isBullish = c.close >= c.open;
+          const color = isBullish ? "#22c55e" : "#ef4444";
 
-        ctx.beginPath();
-        ctx.moveTo(x + candleWidth / 2, yHigh);
-        ctx.lineTo(x + candleWidth / 2, yLow);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+          const yOpen = height - ((c.open - min) / range) * height;
+          const yClose = height - ((c.close - min) / range) * height;
+          const yHigh = height - ((c.high - min) / range) * height;
+          const yLow = height - ((c.low - min) / range) * height;
 
-        ctx.fillStyle = color;
-        const bodyHeight = Math.abs(yClose - yOpen) || 1;
-        ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
-      });
+          ctx.beginPath();
+          ctx.moveTo(x + candleWidth / 2, yHigh);
+          ctx.lineTo(x + candleWidth / 2, yLow);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = color;
+          const bodyHeight = Math.abs(yClose - yOpen) || 1;
+          ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
+        });
+      } catch (e) {
+        console.error("Error rendering chart", e);
+      }
     };
 
     render();
   }, [candles]);
 
   const lastCandle = (candles && candles.length > 0) ? candles[candles.length - 1] : null;
-  const isUp = (lastCandle && lastCandle.close >= lastCandle.open) || true;
+  const isUp = (lastCandle && lastCandle.close >= lastCandle.open);
 
   return (
     <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden min-h-[200px]">
@@ -121,9 +134,9 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       
       {isActive && lastCandle && (
         <div 
-          className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold z-20 flex items-center gap-1 border-y border-l border-white/10 ${lastCandle.close >= lastCandle.open ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold z-20 flex items-center gap-1 border-y border-l border-white/10 ${isUp ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
         >
-          <div className={`w-1.5 h-1.5 rounded-full ${lastCandle.close >= lastCandle.open ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+          <div className={`w-1.5 h-1.5 rounded-full ${isUp ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
           <span>{lastCandle.close.toFixed(4)}</span>
         </div>
       )}
