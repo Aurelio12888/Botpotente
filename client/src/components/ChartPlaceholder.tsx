@@ -8,16 +8,17 @@ interface Candle {
   time: number;
 }
 
-const generateInitialCandles = (count: number) => {
+const generateInitialCandles = (count: number, seed: number) => {
   const candles: Candle[] = [];
-  let prevClose = 50;
+  let currentPrice = 50 + (seed % 20);
   for (let i = 0; i < count; i++) {
-    const open = prevClose;
-    const close = open + (Math.random() - 0.5) * 4;
-    const high = Math.max(open, close) + Math.random() * 1;
-    const low = Math.min(open, close) - Math.random() * 1;
+    const open = currentPrice;
+    const vol = 1 + (seed % 5) / 2;
+    const close = open + (Math.sin(i + seed) * vol);
+    const high = Math.max(open, close) + Math.random() * (vol / 2);
+    const low = Math.min(open, close) - Math.random() * (vol / 2);
     candles.push({ open, high, low, close, time: i });
-    prevClose = close;
+    currentPrice = close;
   }
   return candles;
 };
@@ -29,28 +30,13 @@ interface ChartPlaceholderProps {
 }
 
 export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }: ChartPlaceholderProps) {
-  // Use pair and timeframe in the dependency array to reset candles when they change
   const [candles, setCandles] = useState<Candle[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Generate unique seed based on pair name for visual consistency per asset
     const seed = pair.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const count = 30;
-    const initialCandles: Candle[] = [];
-    
-    // Simple deterministic pseudo-random based on seed
-    let currentPrice = 50 + (seed % 20);
-    for (let i = 0; i < count; i++) {
-      const open = currentPrice;
-      const vol = 1 + (seed % 5) / 2; // Volatility based on asset
-      const close = open + (Math.sin(i + seed) * vol);
-      const high = Math.max(open, close) + Math.random() * (vol/2);
-      const low = Math.min(open, close) - Math.random() * (vol/2);
-      initialCandles.push({ open, high, low, close, time: i });
-      currentPrice = close;
-    }
-    setCandles(initialCandles);
+    const initial = generateInitialCandles(30, seed);
+    setCandles(initial);
 
     const interval = setInterval(() => {
       setCandles(current => {
@@ -59,19 +45,19 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
         const open = lastCandle.close;
         const vol = 1 + (seed % 5) / 2;
         const close = open + (Math.random() - 0.5) * vol;
-        const high = Math.max(open, close) + Math.random() * (vol/4);
-        const low = Math.min(open, close) - Math.random() * (vol/4);
+        const high = Math.max(open, close) + Math.random() * (vol / 4);
+        const low = Math.min(open, close) - Math.random() * (vol / 4);
         
         return [...current.slice(1), { open, high, low, close, time: Date.now() }];
       });
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [pair, timeframe]); // Reset when selection changes
+  }, [pair, timeframe]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || candles.length === 0) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -98,7 +84,6 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
         const yHigh = height - ((c.high - min) / range) * height;
         const yLow = height - ((c.low - min) / range) * height;
 
-        // Wick
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, yHigh);
         ctx.lineTo(x + candleWidth / 2, yLow);
@@ -106,7 +91,6 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Body
         ctx.fillStyle = color;
         const bodyHeight = Math.abs(yClose - yOpen) || 1;
         ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
@@ -116,11 +100,11 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     render();
   }, [candles]);
 
-  const lastCandle = candles[candles.length - 1];
+  const lastCandle = candles.length > 0 ? candles[candles.length - 1] : null;
   const isUp = lastCandle ? lastCandle.close >= lastCandle.open : true;
 
   return (
-    <div className="w-full h-full relative bg-[#06080c]">
+    <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden">
       <div 
         className="absolute inset-0 opacity-5 pointer-events-none" 
         style={{ 
