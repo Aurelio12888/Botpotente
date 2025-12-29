@@ -65,19 +65,25 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Use ResizeObserver to handle canvas sizing properly
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          canvas.width = width * window.devicePixelRatio;
-          canvas.height = height * window.devicePixelRatio;
+    try {
+      // Use ResizeObserver to handle canvas sizing properly
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0) {
+            canvas.width = Math.floor(width * window.devicePixelRatio);
+            canvas.height = Math.floor(height * window.devicePixelRatio);
+          }
         }
-      }
-    });
+      });
 
-    resizeObserver.observe(canvas.parentElement!);
-    return () => resizeObserver.disconnect();
+      if (canvas.parentElement) {
+        resizeObserver.observe(canvas.parentElement);
+      }
+      return () => resizeObserver.disconnect();
+    } catch (err) {
+      console.error("ResizeObserver error:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -142,7 +148,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
   }, [candles]);
 
   const lastCandle = (candles && candles.length > 0) ? candles[candles.length - 1] : null;
-  const isUp = (lastCandle && lastCandle.close >= lastCandle.open);
+  const isUp = lastCandle ? lastCandle.close >= lastCandle.open : false;
 
   return (
     <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden min-h-[200px]">
