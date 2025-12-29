@@ -5,7 +5,9 @@ export function setupTelegramBot() {
   // Em produção, o usuário deve usar REPLIT_DEV_DOMAIN ou o domínio publicado
   const webAppUrl = process.env.REPLIT_DEV_DOMAIN 
     ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-    : "https://seu-app.replit.app";
+    : (process.env.REPLIT_SLUG && process.env.REPLIT_OWNER 
+        ? `https://${process.env.REPLIT_SLUG}.${process.env.REPLIT_OWNER}.repl.co`
+        : "https://seu-app.replit.app");
 
   const bot = new TelegramBot(token, { polling: true });
 
