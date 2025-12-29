@@ -24,42 +24,41 @@ export function ChartPlaceholder({ isActive = true, color = "#22c55e" }: ChartPl
 
   // Simulate live data tick
   useEffect(() => {
-    if (!isActive) return;
-
+    // We want the chart to be visible and moving even if not fully "active" 
+    // to avoid black screens
     const interval = setInterval(() => {
       setData(current => {
         const lastValue = current[current.length - 1].value;
-        const change = (Math.random() - 0.5) * 3; // Random movement
+        const change = (Math.random() - 0.5) * 3;
         const newValue = lastValue + change;
         const newData = [...current.slice(1), { value: newValue }];
         return newData;
       });
-    }, 1000); // 1 tick per second
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, []); // Remove dependency on isActive to keep it always rendering
 
-  // Determine color based on trend (just for visual flair)
   const isUp = data[data.length - 1].value > data[data.length - 5].value;
   const strokeColor = isUp ? "#22c55e" : "#ef4444";
-  const fillColor = isUp ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)";
+  const fillColor = isUp ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)";
 
   return (
-    <div className="w-full h-full relative overflow-hidden rounded-xl bg-card/50 border border-white/5 shadow-inner">
+    <div className="w-full h-full relative overflow-hidden rounded-xl bg-[#0f141f]">
       {/* Grid background effect */}
       <div 
-        className="absolute inset-0 opacity-10" 
+        className="absolute inset-0 opacity-20" 
         style={{ 
-          backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, 
-          backgroundSize: '20px 20px' 
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`, 
+          backgroundSize: '30px 30px' 
         }} 
       />
       
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
+        <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3}/>
+              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.4}/>
               <stop offset="95%" stopColor={strokeColor} stopOpacity={0}/>
             </linearGradient>
           </defs>
@@ -68,7 +67,7 @@ export function ChartPlaceholder({ isActive = true, color = "#22c55e" }: ChartPl
             type="monotone" 
             dataKey="value" 
             stroke={strokeColor} 
-            strokeWidth={2}
+            strokeWidth={3}
             fillOpacity={1} 
             fill="url(#colorValue)" 
             isAnimationActive={false}
@@ -77,17 +76,19 @@ export function ChartPlaceholder({ isActive = true, color = "#22c55e" }: ChartPl
       </ResponsiveContainer>
       
       {/* Live price indicator */}
-      <motion.div 
-        className="absolute right-0 flex items-center gap-1 bg-card/90 px-2 py-1 rounded-l-md border-l border-y border-white/10 text-xs font-mono font-bold"
-        style={{ top: '40%' }} // Static vertical position for simplicity in demo
-        animate={{ y: isUp ? -5 : 5 }}
-        transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
-      >
-        <div className={`w-2 h-2 rounded-full ${isUp ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
-        <span className={isUp ? 'text-green-500' : 'text-red-500'}>
-          {data[data.length - 1].value.toFixed(4)}
-        </span>
-      </motion.div>
+      {isActive && (
+        <motion.div 
+          className="absolute right-0 flex items-center gap-1 bg-[#1a202c]/90 px-2 py-1 rounded-l-md border-l border-y border-white/10 text-xs font-mono font-bold z-20"
+          style={{ top: '50%' }}
+          animate={{ y: isUp ? -2 : 2 }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+        >
+          <div className={`w-2 h-2 rounded-full ${isUp ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+          <span className={isUp ? 'text-green-500' : 'text-red-500'}>
+            {data[data.length - 1].value.toFixed(4)}
+          </span>
+        </motion.div>
+      )}
     </div>
   );
 }

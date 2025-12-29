@@ -123,7 +123,7 @@ export default function Home() {
         </section>
 
         {/* Chart Visualization */}
-        <section className="flex-1 min-h-[250px] relative rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/20">
+        <section className="flex-1 min-h-[250px] relative rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black">
           {isReady ? (
             <div className="absolute top-4 left-4 z-10 flex flex-col">
               <span className="text-xs text-muted-foreground font-mono">LIVE MARKET DATA</span>
@@ -131,7 +131,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <span className="text-muted-foreground/50 text-sm font-medium">Select asset to view chart</span>
+              <span className="text-muted-foreground text-sm font-medium">Select asset to view chart</span>
             </div>
           )}
           
