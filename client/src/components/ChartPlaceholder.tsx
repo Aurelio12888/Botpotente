@@ -63,6 +63,25 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Use ResizeObserver to handle canvas sizing properly
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          canvas.width = width * window.devicePixelRatio;
+          canvas.height = height * window.devicePixelRatio;
+        }
+      }
+    });
+
+    resizeObserver.observe(canvas.parentElement!);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
     if (!canvas || !candles || candles.length === 0) return;
 
     const ctx = canvas.getContext('2d');
@@ -71,17 +90,25 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     const render = () => {
       try {
         const { width, height } = canvas;
-        ctx.clearRect(0, 0, width, height);
+        ctx.save();
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        const drawWidth = width / window.devicePixelRatio;
+        const drawHeight = height / window.devicePixelRatio;
+
+        ctx.clearRect(0, 0, drawWidth, drawHeight);
 
         const allValues = candles.flatMap(c => c ? [c.high, c.low] : []);
-        if (allValues.length === 0) return;
+        if (allValues.length === 0) {
+          ctx.restore();
+          return;
+        }
 
         const min = Math.min(...allValues) - 2;
         const max = Math.max(...allValues) + 2;
         const range = max - min || 1;
 
-        const candleWidth = (width / candles.length) * 0.8;
-        const gap = (width / candles.length) * 0.2;
+        const candleWidth = (drawWidth / candles.length) * 0.8;
+        const gap = (drawWidth / candles.length) * 0.2;
 
         candles.forEach((c, i) => {
           if (!c) return;
@@ -89,10 +116,10 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           const isBullish = c.close >= c.open;
           const color = isBullish ? "#22c55e" : "#ef4444";
 
-          const yOpen = height - ((c.open - min) / range) * height;
-          const yClose = height - ((c.close - min) / range) * height;
-          const yHigh = height - ((c.high - min) / range) * height;
-          const yLow = height - ((c.low - min) / range) * height;
+          const yOpen = drawHeight - ((c.open - min) / range) * drawHeight;
+          const yClose = drawHeight - ((c.close - min) / range) * drawHeight;
+          const yHigh = drawHeight - ((c.high - min) / range) * drawHeight;
+          const yLow = drawHeight - ((c.low - min) / range) * drawHeight;
 
           ctx.beginPath();
           ctx.moveTo(x + candleWidth / 2, yHigh);
@@ -105,6 +132,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           const bodyHeight = Math.abs(yClose - yOpen) || 1;
           ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
         });
+        ctx.restore();
       } catch (e) {
         console.error("Error rendering chart", e);
       }
@@ -127,9 +155,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       />
       <canvas 
         ref={canvasRef} 
-        width={800} 
-        height={600} 
-        className="w-full h-full relative z-10 p-2"
+        className="w-full h-full relative z-10"
       />
       
       {isActive && lastCandle && (
