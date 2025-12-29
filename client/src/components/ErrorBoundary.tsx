@@ -26,20 +26,23 @@ class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div className="min-h-screen bg-[#0f141f] text-white flex items-center justify-center p-6 text-center">
           <div className="max-w-xs space-y-4">
-            <h2 className="text-xl font-bold">Algo deu errado</h2>
-            <p className="text-sm text-white/60">Reinicie o bot no Telegram para continuar.</p>
+            <h2 className="text-xl font-bold">Oops! Algo deu errado</h2>
+            <p className="text-sm text-white/60">Tivemos um problema técnico. Clique no botão abaixo para recarregar o bot.</p>
             <button 
-              onClick={() => window.location.reload()}
-              className="w-full py-3 bg-blue-600 rounded-xl font-bold"
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+              className="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition-colors"
             >
-              Recarregar
+              Recarregar Interface
             </button>
           </div>
         </div>
       );
     }
 
-    return this.children;
+    return this.props.children;
   }
 }
 
