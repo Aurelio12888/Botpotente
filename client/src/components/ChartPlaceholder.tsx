@@ -100,11 +100,11 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     render();
   }, [candles]);
 
-  const lastCandle = candles.length > 0 ? candles[candles.length - 1] : null;
-  const isUp = lastCandle ? lastCandle.close >= lastCandle.open : true;
+  const lastCandle = (candles && candles.length > 0) ? candles[candles.length - 1] : null;
+  const isUp = (lastCandle && lastCandle.close >= lastCandle.open) || true;
 
   return (
-    <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden">
+    <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden min-h-[200px]">
       <div 
         className="absolute inset-0 opacity-5 pointer-events-none" 
         style={{ 
@@ -121,9 +121,9 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       
       {isActive && lastCandle && (
         <div 
-          className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold z-20 flex items-center gap-1 border-y border-l border-white/10 ${isUp ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-mono font-bold z-20 flex items-center gap-1 border-y border-l border-white/10 ${lastCandle.close >= lastCandle.open ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
         >
-          <div className={`w-1.5 h-1.5 rounded-full ${isUp ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+          <div className={`w-1.5 h-1.5 rounded-full ${lastCandle.close >= lastCandle.open ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
           <span>{lastCandle.close.toFixed(4)}</span>
         </div>
       )}
