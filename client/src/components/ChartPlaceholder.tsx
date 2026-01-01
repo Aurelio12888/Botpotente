@@ -101,10 +101,13 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     const render = () => {
       try {
         const { width, height } = canvas;
+        const dpr = window.devicePixelRatio || 1;
+        
         ctx.save();
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        const drawWidth = width / window.devicePixelRatio;
-        const drawHeight = height / window.devicePixelRatio;
+        ctx.scale(dpr, dpr);
+        
+        const drawWidth = width / dpr;
+        const drawHeight = height / dpr;
 
         ctx.clearRect(0, 0, drawWidth, drawHeight);
 
@@ -143,6 +146,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           const bodyHeight = Math.abs(yClose - yOpen) || 1;
           ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
         });
+        
         ctx.restore();
       } catch (e) {
         console.error("Error rendering chart", e);
