@@ -18,7 +18,8 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    // Silently log and prevent the Vite overlay from taking over
+    console.warn("Caught by Boundary:", error);
   }
 
   public render() {

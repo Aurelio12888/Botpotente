@@ -70,23 +70,21 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     if (!canvas) return;
 
     try {
-      // Use ResizeObserver to handle canvas sizing properly
       const resizeObserver = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          const { width, height } = entry.contentRect;
-          if (width > 0 && height > 0) {
-            canvas.width = Math.floor(width * window.devicePixelRatio);
-            canvas.height = Math.floor(height * window.devicePixelRatio);
-          }
+        if (!entries || !entries.length) return;
+        const entry = entries[0];
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
         }
       });
 
-      if (canvas.parentElement) {
-        resizeObserver.observe(canvas.parentElement);
-      }
+      resizeObserver.observe(canvas.parentElement!);
       return () => resizeObserver.disconnect();
     } catch (err) {
-      console.error("ResizeObserver error:", err);
+      console.warn("ResizeObserver disabled:", err);
     }
   }, []);
 
