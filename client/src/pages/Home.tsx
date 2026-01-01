@@ -80,8 +80,8 @@ export default function Home() {
             <Zap className="text-white w-6 h-6" fill="currentColor" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-lg leading-none">Pocket Broker</h1>
-            <span className="text-xs text-muted-foreground font-mono">AI Signal Bot v2.0</span>
+            <h1 className="font-display font-bold text-lg leading-none">Pocket Signal</h1>
+            <span className="text-xs text-muted-foreground font-mono">AI Trading Bot v2.0</span>
           </div>
         </div>
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white">
