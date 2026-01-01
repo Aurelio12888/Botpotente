@@ -10,5 +10,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Em produção (Railway), o banco geralmente exige SSL
+const isProduction = process.env.NODE_ENV === "production";
+
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: isProduction ? { rejectUnauthorized: false } : false
+});
+
 export const db = drizzle(pool, { schema });

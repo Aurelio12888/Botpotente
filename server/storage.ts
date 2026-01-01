@@ -13,19 +13,34 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async createSignal(signal: InsertSignal): Promise<Signal> {
-    const [newSignal] = await db
-      .insert(signals)
-      .values(signal)
-      .returning();
-    return newSignal;
+    try {
+      const [newSignal] = await db
+        .insert(signals)
+        .values(signal)
+        .returning();
+      
+      if (!newSignal) {
+        throw new Error("Failed to insert signal: No data returned");
+      }
+      
+      return newSignal;
+    } catch (error) {
+      console.error("Database error in createSignal:", error);
+      throw new Error("Could not save signal to database");
+    }
   }
 
   async getRecentSignals(limit: number = 10): Promise<Signal[]> {
-    return await db
-      .select()
-      .from(signals)
-      .orderBy(desc(signals.entryTime))
-      .limit(limit);
+    try {
+      return await db
+        .select()
+        .from(signals)
+        .orderBy(desc(signals.entryTime))
+        .limit(limit);
+    } catch (error) {
+      console.error("Database error in getRecentSignals:", error);
+      return [];
+    }
   }
 }
 

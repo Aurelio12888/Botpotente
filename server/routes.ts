@@ -54,10 +54,14 @@ export async function registerRoutes(
       });
 
     } catch (err) {
+      console.error("Error in /api/signals/generate:", err);
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input" });
+        return res.status(400).json({ message: "Dados de entrada inválidos" });
       }
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ 
+        message: "Erro interno ao gerar sinal",
+        details: err instanceof Error ? err.message : String(err)
+      });
     }
   });
 
