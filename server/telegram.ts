@@ -9,7 +9,15 @@ export function setupTelegramBot() {
         ? `https://${process.env.REPLIT_SLUG}.${process.env.REPLIT_OWNER}.repl.co`
         : "https://seu-app.replit.app");
 
-  const bot = new TelegramBot(token, { polling: true });
+  const bot = new TelegramBot(token, { polling: { autoStart: true } });
+
+  bot.on('polling_error', (error) => {
+    if (error.message.includes('409')) {
+      // Ignore conflict errors to allow other instance
+    } else {
+      console.error("Telegram polling error:", error);
+    }
+  });
 
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;

@@ -39,12 +39,13 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       const initial = generateInitialCandles(30, seed);
       setCandles(initial);
 
-      const interval = setInterval(() => {
-        setCandles(current => {
-          if (!current || current.length === 0) return current;
-          const lastCandle = current[current.length - 1];
-          if (!lastCandle) return current;
-          
+    const interval = setInterval(() => {
+      setCandles(current => {
+        if (!current || current.length === 0) return [];
+        const lastCandle = current[current.length - 1];
+        if (!lastCandle) return current;
+        
+        try {
           const open = lastCandle.close;
           const vol = 1 + (seed % 5) / 2;
           const close = open + (Math.random() - 0.5) * vol;
@@ -52,8 +53,12 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           const low = Math.min(open, close) - Math.random() * (vol / 4);
           
           return [...current.slice(1), { open, high, low, close, time: Date.now() }];
-        });
-      }, 2000);
+        } catch (e) {
+          console.error("Error updating candles", e);
+          return current;
+        }
+      });
+    }, 2000);
 
       return () => clearInterval(interval);
     } catch (e) {
