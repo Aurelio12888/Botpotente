@@ -123,28 +123,30 @@ export default function Home() {
         </section>
 
         {/* Chart Visualization */}
-        <section className="flex-1 min-h-[250px] relative rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black">
+        <section className="flex-1 min-h-[300px] relative rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-[#06080c]">
           {isReady ? (
-            <div className="absolute top-4 left-4 z-10 flex flex-col">
-              <span className="text-xs text-muted-foreground font-mono">LIVE MARKET DATA</span>
-              <span className="text-lg font-bold font-display text-white">{pair}</span>
+            <div className="absolute top-4 left-4 z-10 flex flex-col pointer-events-none">
+              <span className="text-[10px] text-muted-foreground font-mono opacity-50">LIVE MARKET DATA</span>
+              <span className="text-sm font-bold font-display text-white/80">{pair}</span>
             </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <span className="text-muted-foreground text-sm font-medium">Select asset to view chart</span>
+              <span className="text-muted-foreground text-xs font-medium opacity-50 uppercase tracking-widest">Select asset to view chart</span>
             </div>
           )}
           
-          <ChartPlaceholder isActive={isReady} pair={pair} timeframe={timeframe} />
+          <div className="absolute inset-0">
+            <ChartPlaceholder isActive={isReady} pair={pair} timeframe={timeframe} />
+          </div>
           
           {/* Active status indicator overlay */}
           {isReady && (
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/5">
-              <span className="relative flex h-2 w-2">
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full border border-white/5 pointer-events-none">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
               </span>
-              <span className="text-xs font-mono text-green-400">Connected</span>
+              <span className="text-[10px] font-mono text-green-400">Live</span>
             </div>
           )}
         </section>

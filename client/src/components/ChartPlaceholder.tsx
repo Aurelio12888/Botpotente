@@ -32,6 +32,7 @@ interface ChartPlaceholderProps {
 export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }: ChartPlaceholderProps) {
   const [candles, setCandles] = useState<Candle[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -39,8 +40,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       const initial = generateInitialCandles(30, seed);
       setCandles(initial);
 
-    const interval = setInterval(() => {
-      try {
+      const interval = setInterval(() => {
         setCandles(current => {
           if (!current || current.length === 0) return [];
           const lastCandle = current[current.length - 1];
@@ -54,10 +54,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           
           return [...current.slice(1), { open, high, low, close, time: Date.now() }];
         });
-      } catch (err) {
-        console.error("Interval update error:", err);
-      }
-    }, 2000);
+      }, 2000);
 
       return () => clearInterval(interval);
     } catch (e) {
@@ -69,23 +66,24 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    try {
-      const resizeObserver = new ResizeObserver((entries) => {
-        if (!entries || !entries.length) return;
-        const entry = entries[0];
-        const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          const dpr = window.devicePixelRatio || 1;
-          canvas.width = Math.floor(width * dpr);
-          canvas.height = Math.floor(height * dpr);
-        }
-      });
+    const updateSize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const { width, height } = container.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      }
+    };
 
-      resizeObserver.observe(canvas.parentElement!);
-      return () => resizeObserver.disconnect();
-    } catch (err) {
-      console.warn("ResizeObserver disabled:", err);
-    }
+    updateSize();
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
+    
+    return () => resizeObserver.disconnect();
   }, []);
 
   useEffect(() => {
@@ -140,7 +138,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
           ctx.stroke();
 
           ctx.fillStyle = color;
-          const bodyHeight = Math.abs(yClose - yOpen) || 1;
+          const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
           ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
         });
         
@@ -157,7 +155,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
   const isUp = lastCandle ? lastCandle.close >= lastCandle.open : false;
 
   return (
-    <div className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden min-h-[200px]">
+    <div ref={containerRef} className="w-full h-full relative bg-[#06080c] rounded-xl overflow-hidden min-h-[200px]">
       <div 
         className="absolute inset-0 opacity-5 pointer-events-none" 
         style={{ 
@@ -167,7 +165,7 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
       />
       <canvas 
         ref={canvasRef} 
-        className="w-full h-full relative z-10"
+        className="relative z-10"
       />
       
       {isActive && lastCandle && (
