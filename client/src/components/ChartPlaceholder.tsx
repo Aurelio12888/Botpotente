@@ -66,37 +66,41 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const updateSize = () => {
-      const container = containerRef.current;
-      if (!container) return;
-      const { width, height } = container.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-      }
-    };
+    try {
+      const updateSize = () => {
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const dpr = 1; // Force DPR to 1 to reduce memory pressure on mobile
+          canvas.width = Math.floor(rect.width * dpr);
+          canvas.height = Math.floor(rect.height * dpr);
+          canvas.style.width = `${Math.floor(rect.width)}px`;
+          canvas.style.height = `${Math.floor(rect.height)}px`;
+        }
+      };
 
-    updateSize();
-    const resizeObserver = new ResizeObserver(updateSize);
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
-    
-    return () => resizeObserver.disconnect();
+      updateSize();
+      const resizeObserver = new ResizeObserver(updateSize);
+      if (containerRef.current) resizeObserver.observe(containerRef.current);
+      
+      return () => resizeObserver.disconnect();
+    } catch (e) {
+      console.warn("Sizing error caught:", e);
+    }
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !candles || candles.length === 0) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Disable alpha for performance
     if (!ctx) return;
 
     const render = () => {
       try {
         const { width, height } = canvas;
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = 1; // Match updateSize DPR
         
         ctx.save();
         ctx.scale(dpr, dpr);
@@ -104,7 +108,8 @@ export function ChartPlaceholder({ isActive = true, pair = "", timeframe = "" }:
         const drawWidth = width / dpr;
         const drawHeight = height / dpr;
 
-        ctx.clearRect(0, 0, drawWidth, drawHeight);
+        ctx.fillStyle = "#06080c"; // Explicit background
+        ctx.fillRect(0, 0, drawWidth, drawHeight);
 
         const allValues = candles.flatMap(c => c ? [c.high, c.low] : []);
         if (allValues.length === 0) {

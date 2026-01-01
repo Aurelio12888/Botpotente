@@ -45,7 +45,9 @@ export default function Home() {
         generateSignal({ pair, timeframe }),
         new Promise(resolve => setTimeout(resolve, 2500)) // Force 2.5s delay for effect
       ]);
-      setSignal(result);
+      if (result) {
+        setSignal(result);
+      }
     } catch (error) {
       toast({
         variant: "destructive",

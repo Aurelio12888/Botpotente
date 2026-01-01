@@ -43,7 +43,12 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    try {
+      return this.props.children;
+    } catch (e) {
+      console.error("Render error caught:", e);
+      return null;
+    }
   }
 }
 
